@@ -1,7 +1,8 @@
 const db = require("../models")
 
 module.exports = function(app){ 
-    app.get("/api/workouts",function(req,res){  
+    // database call to get workout information
+    app.get("/api/workouts", (req,res) => {  
         db.Workout.find()
         .then(data =>{  
             res.json(data)
@@ -11,16 +12,15 @@ module.exports = function(app){
         })
     });
 
-
-    app.post("/api/workouts",function (req,res){    
+    // database call to input new exercise into the database
+    app.post("/api/workouts", (req,res) => {    
         db.Workout.create({})
         .then(data => res.json(data))
         .catch(err => { 
             res.json(err)
         })
     });
-
-    app.get("/api/workouts/range",function(req,res){  
+    app.get("/api/workouts/range", (req,res) => {  
         db.Workout.find()
         .then(data =>{  
             res.json(data)
@@ -29,16 +29,28 @@ module.exports = function(app){
             res.json(err)
         })
     });
-
-
-    app.post("/api/workouts/range",function (req,res){    
-        db.Workout.create({})
-        .then(data => res.json(data))
+    // database call to get workout information
+    app.get("/api/workouts/range", (req,res) => {  
+        db.Workout.aggregate([ 
+            {$unwind: "$exercises"},
+            {
+              $group: { 
+                  _id: "$_id",
+                totalDuration: {
+                  $sum: "$exercises.duration"
+                }
+              }
+            }],
+            ).then(data =>{  
+            res.json(data)
+            console.log(data)
+        })
         .catch(err => { 
             res.json(err)
         })
     });
 
+    // database call to change infromation about a workout
     app.put("/api/workouts/:id",({body,params},res)=>{   
         db.Workout.findByIdAndUpdate(  
          params.id,
