@@ -3,12 +3,22 @@ const db = require("../models")
 module.exports = function(app){ 
     // database call to get workout information
     app.get("/api/workouts", (req,res) => {  
-        db.Workout.find()
-        .then(data =>{  
+       db.Workout.aggregate([ 
+        {$project: 
+            {exercises: 1, day: 1,
+            totalDuration: 
+            {$sum: "$exercises.duration"}}}
+       ])
+       .sort({_id: -1})
+        .limit(1)
+        .then(data =>{
+            console.log(data)
             res.json(data)
+
         })
         .catch(err => { 
-            res.json(err)
+            // res.json(err)
+            console.log(err)
         })
     });
 
@@ -21,35 +31,23 @@ module.exports = function(app){
         })
     });
     app.get("/api/workouts/range", (req,res) => {  
-        db.Workout.find()
-        .then(data =>{  
-            res.json(data)
-        })
-        .catch(err => { 
-            res.json(err)
-        })
-    });
-    // database call to get workout information
-    app.get("/api/workouts/range", (req,res) => {  
         db.Workout.aggregate([ 
-            {$unwind: "$exercises"},
-            {
-              $group: { 
-                  _id: "$_id",
-                totalDuration: {
-                  $sum: "$exercises.duration"
-                }
-              }
-            }],
-            ).then(data =>{  
-            res.json(data)
+            {$project: 
+                {exercises: 1, day: 1,
+                totalDuration: 
+                {$sum: "$exercises.duration"}}}
+           ])
+        .then(data =>{
             console.log(data)
-        })
-        .catch(err => { 
-            res.json(err)
-        })
-    });
-
+                res.json(data)
+    
+            })
+            .catch(err => { 
+                // res.json(err)
+                console.log(err)
+            })
+        });
+    
     // database call to change infromation about a workout
     app.put("/api/workouts/:id",({body,params},res)=>{   
         db.Workout.findByIdAndUpdate(  
